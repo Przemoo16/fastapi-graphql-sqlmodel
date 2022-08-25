@@ -1,0 +1,31 @@
+# Git
+.git/
+.gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+
+# mypy
+.mypy_cache/
+
+# Visual Studio Code
+.vscode/
+
+# Pre-commit
+.pre-commit-config.yaml
+
+# Docker
+.dockerignore
+docker-compose.yml
+*.Dockerfile
+Dockerfile
+
+# Tests / Coverage reports
+.coverage
+.coveragerc
+.pytest_cache/
+htmlcov/
+
+# dotenv
+*.env.template

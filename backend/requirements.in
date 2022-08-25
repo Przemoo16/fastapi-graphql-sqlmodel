@@ -1,0 +1,23 @@
+# Please keep names sorted alphabetically
+# prod
+alembic
+asyncpg
+fastapi
+pydantic
+sqlalchemy<1.4.36 # TODO: https://github.com/tiangolo/sqlmodel/issues/315
+sqlmodel
+strawberry-graphql
+uvicorn[standard]
+# dev
+bandit
+black
+flake8
+flake8-docstrings
+flake8-print
+isort
+mypy
+pip-tools
+pylint
+pytest
+pytest-cov
+pyupgrade

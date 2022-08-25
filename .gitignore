@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# mypy
+.mypy_cache/
+
+# IDE
+.vscode/
+.idea/
+
+# Tests / Coverage reports
+.coverage
+.coveragerc
+.pytest_cache/
+htmlcov/
+
+# dotenv
+*.env
