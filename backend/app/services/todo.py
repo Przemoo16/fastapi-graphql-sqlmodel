@@ -1,3 +1,5 @@
+import dataclasses
+
 import sqlmodel
 from sqlmodel.sql import expression
 
@@ -5,16 +7,10 @@ from app.config import db
 from app.models import todo as todo_models
 
 
-async def create_todo(  # type: ignore
-    title: todo_models.TodoTitle,
-    description: todo_models.TodoDescription | None = None,
-    remind_at: todo_models.TodoRemindAt | None = None,
-):
+async def create_todo(todo: todo_models.TodoInput):  # type: ignore
     async with db.get_session() as session:
-        todo = todo_models.Todo(
-            title=title, description=description, remind_at=remind_at
-        )
-        return await TodoCRUD(session).create(todo, refresh=True)
+        todo_db = todo_models.Todo(**dataclasses.asdict(todo))
+        return await TodoCRUD(session).create(todo_db, refresh=True)
 
 
 async def get_todos():  # type: ignore
