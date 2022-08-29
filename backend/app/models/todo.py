@@ -39,8 +39,8 @@ class Todo(sqlmodel.SQLModel, table=True):
         primary_key=True, default_factory=generate_fixed_uuid, nullable=False
     )
     title: TodoTitle = sqlmodel.Field(min_length=4, max_length=128)
-    description: TodoDescription | None = sqlmodel.Field(max_length=2048)
-    remind_at: TodoRemindAt | None
+    description: TodoDescription | None = sqlmodel.Field(default=None, max_length=2048)
+    remind_at: TodoRemindAt | None = None
     created_at: datetime.datetime = sqlmodel.Field(default_factory=get_utcnow)
     updated_at: datetime.datetime = sqlmodel.Field(
         default_factory=get_utcnow, sa_column_kwargs={"onupdate": get_utcnow}
@@ -51,8 +51,15 @@ class TodoFilters(pydantic.BaseModel):
     title: TodoTitle | None = None
 
 
-@strawberry.type
+@strawberry.experimental.pydantic.type(model=Todo)
 class TodoSchema:
     title: TodoTitle
     description: TodoDescription | None
     remind_at: TodoRemindAt | None
+
+
+@strawberry.experimental.pydantic.input(model=Todo)
+class TodoInput:
+    title: TodoTitle
+    description: TodoDescription | None = None
+    remind_at: TodoRemindAt | None = None

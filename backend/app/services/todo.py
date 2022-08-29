@@ -5,22 +5,22 @@ from app.config import db
 from app.models import todo as todo_models
 
 
-async def create_todo(  # type: ignore
-    title: todo_models.TodoTitle,
-    description: todo_models.TodoDescription | None = None,
-    remind_at: todo_models.TodoRemindAt | None = None,
-):
+async def create_todo(todo: todo_models.TodoInput) -> todo_models.TodoSchema:
     async with db.get_session() as session:
-        todo = todo_models.Todo(
-            title=title, description=description, remind_at=remind_at
+        todo_db = todo.to_pydantic()
+        created_todo = await TodoCRUD(session).create(todo_db, refresh=True)
+        return todo_models.TodoSchema.from_pydantic(  # pylint: disable=no-member
+            created_todo
         )
-        return await TodoCRUD(session).create(todo, refresh=True)
 
 
-async def get_todos():  # type: ignore
+async def get_todos() -> list[todo_models.TodoSchema]:
     async with db.get_session() as session:
         filters = todo_models.TodoFilters()
-        return await TodoCRUD(session).read_many(filters)
+        todos = await TodoCRUD(session).read_many(filters)
+    return [  # pylint: disable=no-member
+        todo_models.TodoSchema.from_pydantic(todo) for todo in todos
+    ]
 
 
 class TodoCRUD:

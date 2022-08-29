@@ -1,8 +1,8 @@
 """Create TODO table
 
-Revision ID: ecb9e772873c
+Revision ID: b7e9beb01d32
 Revises: 
-Create Date: 2022-08-25 14:35:43.368579
+Create Date: 2022-08-29 06:49:24.618331
 
 """
 from alembic import op
@@ -12,7 +12,7 @@ import sqlmodel
 
 
 # revision identifiers, used by Alembic.
-revision = 'ecb9e772873c'
+revision = 'b7e9beb01d32'
 down_revision = None
 branch_labels = None
 depends_on = None
