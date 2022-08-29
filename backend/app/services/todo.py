@@ -1,5 +1,3 @@
-import dataclasses
-
 import sqlmodel
 from sqlmodel.sql import expression
 
@@ -7,16 +5,22 @@ from app.config import db
 from app.models import todo as todo_models
 
 
-async def create_todo(todo: todo_models.TodoInput):  # type: ignore
+async def create_todo(todo: todo_models.TodoInput) -> todo_models.TodoSchema:
     async with db.get_session() as session:
-        todo_db = todo_models.Todo(**dataclasses.asdict(todo))
-        return await TodoCRUD(session).create(todo_db, refresh=True)
+        todo_db = todo.to_pydantic()
+        created_todo = await TodoCRUD(session).create(todo_db, refresh=True)
+        return todo_models.TodoSchema.from_pydantic(  # pylint: disable=no-member
+            created_todo
+        )
 
 
-async def get_todos():  # type: ignore
+async def get_todos() -> list[todo_models.TodoSchema]:
     async with db.get_session() as session:
         filters = todo_models.TodoFilters()
-        return await TodoCRUD(session).read_many(filters)
+        todos = await TodoCRUD(session).read_many(filters)
+    return [  # pylint: disable=no-member
+        todo_models.TodoSchema.from_pydantic(todo) for todo in todos
+    ]
 
 
 class TodoCRUD:

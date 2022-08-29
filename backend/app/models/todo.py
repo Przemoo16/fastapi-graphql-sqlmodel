@@ -51,14 +51,14 @@ class TodoFilters(pydantic.BaseModel):
     title: TodoTitle | None = None
 
 
-@strawberry.type
+@strawberry.experimental.pydantic.type(model=Todo)
 class TodoSchema:
     title: TodoTitle
     description: TodoDescription | None
     remind_at: TodoRemindAt | None
 
 
-@strawberry.input
+@strawberry.experimental.pydantic.input(model=Todo)
 class TodoInput:
     title: TodoTitle
     description: TodoDescription | None = None
