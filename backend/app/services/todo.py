@@ -1,26 +1,51 @@
+import logging
+import typing
+
+from sqlalchemy import exc
 import sqlmodel
 from sqlmodel.sql import expression
 
-from app.config import db
 from app.models import todo as todo_models
 
+if typing.TYPE_CHECKING:
+    from app.config import db
 
-async def create_todo(todo: todo_models.TodoInput) -> todo_models.TodoSchema:
-    async with db.get_session() as session:
-        todo_db = todo.to_pydantic()
-        created_todo = await TodoCRUD(session).create(todo_db, refresh=True)
-        return todo_models.TodoSchema.from_pydantic(  # pylint: disable=no-member
-            created_todo
-        )
+log = logging.getLogger(__name__)
 
 
-async def get_todos() -> list[todo_models.TodoSchema]:
-    async with db.get_session() as session:
-        filters = todo_models.TodoFilters()
-        todos = await TodoCRUD(session).read_many(filters)
-    return [  # pylint: disable=no-member
-        todo_models.TodoSchema.from_pydantic(todo) for todo in todos
-    ]
+async def create_todo(
+    todo: todo_models.TodoCreate, *, session: "db.AsyncSession"
+) -> todo_models.Todo:
+    return await TodoCRUD(session).create(todo, refresh=True)
+
+
+async def get_todos(
+    filters: todo_models.TodoFilters, *, session: "db.AsyncSession"
+) -> list[todo_models.Todo]:
+    return await TodoCRUD(session).read_many(filters)
+
+
+async def get_todo(
+    filters: todo_models.TodoFilters, *, session: "db.AsyncSession"
+) -> todo_models.Todo:
+    try:
+        return await TodoCRUD(session).read_one(filters)
+    except exc.NoResultFound:
+        log.exception("Not found todo in the DB")
+        raise
+
+
+async def update_todo(
+    todo_db: todo_models.Todo,
+    todo_update: todo_models.TodoUpdate,
+    *,
+    session: "db.AsyncSession",
+) -> todo_models.Todo:
+    return await TodoCRUD(session).update(todo_db, todo_update, refresh=True)
+
+
+async def delete_todo(todo: todo_models.Todo, *, session: "db.AsyncSession") -> None:
+    await TodoCRUD(session).delete(todo)
 
 
 class TodoCRUD:
@@ -29,7 +54,7 @@ class TodoCRUD:
         self.model = todo_models.Todo
 
     async def create(
-        self, entry: todo_models.Todo, refresh: bool = False
+        self, entry: todo_models.TodoCreate, refresh: bool = False
     ) -> todo_models.Todo:
         db_entry = self.model.from_orm(entry)
         return await self._save(db_entry, refresh)
@@ -37,6 +62,25 @@ class TodoCRUD:
     async def read_many(self, entry: todo_models.TodoFilters) -> list[todo_models.Todo]:
         statement = self.build_where_statement(sqlmodel.select(self.model), entry)
         return (await self.session.execute(statement)).scalars().all()
+
+    async def read_one(self, entry: todo_models.TodoFilters) -> todo_models.Todo:
+        statement = self.build_where_statement(sqlmodel.select(self.model), entry)
+        return (await self.session.execute(statement)).scalar_one()
+
+    async def update(
+        self,
+        db_entry: todo_models.Todo,
+        entry: todo_models.TodoUpdate,
+        refresh: bool = False,
+    ) -> todo_models.Todo:
+        data = entry.dict(exclude_unset=True)
+        for key, value in data.items():
+            setattr(db_entry, key, value)
+        return await self._save(db_entry, refresh)
+
+    async def delete(self, entry: todo_models.Todo) -> None:
+        await self.session.delete(entry)
+        await self.session.commit()
 
     async def _save(
         self, entry: todo_models.Todo, refresh: bool = False
